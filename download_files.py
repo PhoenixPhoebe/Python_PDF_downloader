@@ -27,38 +27,41 @@ import glob
 ########## EDIT HERE:
     
 ### specify path to file containing the URLs
-#list_pth = 'K:/TextMining/02 Analysis 8/10 TextMining Projects/CSR/CSR Train/02 Supporting Scripts/01 Scripts input/GRI_2017_2020_SAHO.xlsx'
-list_pth = 'GRI_2017_2020.xlsx'
+folder_pth = r'C:\Users\LineWienke\Documents\Python_PDF_downloader/'
+list_file = 'GRI_2017_2020.xlsx'
+list_pth = folder_pth + list_file
 
-###specify Output folder (in this case it moves one folder up and saves in the script output folder)
-#pth = 'K:/TextMining/02 Analysis 8/10 TextMining Projects/CSR/CSR Train/02 Supporting Scripts/03 Scripts output/'
-pth = r'C:\Users\LineWienke\Documents\Python-pdf-downloader\Downloaded-pdfs\dwn/'
+###specify Output folder 
+pth = folder_pth + 'Downloaded-pdfs/'
 
 ###Specify path for existing downloads
-#dwn_pth = 'K:/TextMining/02 Analysis 8/10 TextMining Projects/CSR/CSR Train/02 Supporting Scripts/03 Scripts output/dwn/'
-dwn_pth = pth
+dwn_pth = pth + "dwn/"
 
-### cheack for files already downloaded
-dwn_files = glob.glob(os.path.join(dwn_pth, "*.pdf")) 
-exist = [os.path.basename(f)[:-4] for f in dwn_files]
+###Specify file for MetaData in output folder
+MD = "Metadata2006_2016"
 
 ###specify the ID column name
 ID = "BRnum"
 
-
 ##########
+"""
+### cheack for files already downloaded
+dwn_files = glob.glob(os.path.join(dwn_pth, "*.pdf")) 
+exist = [os.path.basename(f)[:-4] for f in dwn_files]
 
+print(exist)
+"""
 ### read in file
 df = pd.read_excel(list_pth, sheet_name=0, index_col=ID)
 
 ### filter out rows with no URL
 non_empty = df.Pdf_URL.notnull() == True
 df = df[non_empty]
-#df2 = df.copy()
+#df2 = df.copy() - Shoud be this but uses head for testing
 df2 = df.head(5)
 
 #print(df2)
-""" 
+"""
 #writer = pd.ExcelWriter(pth+'check_3.xlsx', engine='xlsxwriter', options={'strings_to_urls': False})
 
 
@@ -69,27 +72,27 @@ df2 = df2[~df2.index.isin(exist)]
 ### loop through dataset, try to download file.
 for j in df2.index:
    
-    savefile = str(pth + "dwn/" + str(j) + '.pdf')
-    print(savefile)
+    savefile = str(dwn_pth + str(j) + '.pdf')
     try:
         req.urlretrieve(df2.at[j,'Pdf_URL'], savefile)
 
         if os.path.isfile(savefile):
-               print("test")
-            #try:
-                #pdfFileObj = open(savefile, 'rb')
-               # creating a pdf reader object
-                #pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
-                #with open(savefile, 'rb') as pdfFileObj:
-                    #pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
-                    #if pdfReader.numPages > 0:
-                        #df2.at[j, 'pdf_downloaded'] = "yes"
-                    #else:
-                        #df2.at[j, 'pdf_downloaded'] = "file_error"
+            print("test")
+            """try:
+                pdfFileObj = open(savefile, 'rb')
+                #creating a pdf reader object
+                pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
+                with open(savefile, 'rb') as pdfFileObj:
+                    pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
+                    if pdfReader.numPages > 0:
+                        df2.at[j, 'pdf_downloaded'] = "yes"
+                    else:
+                        df2.at[j, 'pdf_downloaded'] = "file_error"
                
-            #except Exception as e:
-               # df2.at[j, 'pdf_downloaded'] = str(e)
-                #print(str(str(j)+" " + str(e)))
+            except Exception as e:
+                    df2.at[j, 'pdf_downloaded'] = str(e)
+                    print(str(str(j)+" " + str(e)))
+                    """
         else:
             #df2.at[j, 'pdf_downloaded'] = "404"
             print("not a file")

@@ -11,6 +11,7 @@ Created on Sun Oct 13 15:37:08 2019
 #pip install PyPDF2
 
 import pandas as pd
+from openpyxl import load_workbook
 import PyPDF2
 from pathlib import Path
 import shutil, os
@@ -38,37 +39,56 @@ pth = folder_pth + 'Downloaded-pdfs/'
 dwn_pth = pth + "dwn/"
 
 ###Specify file for MetaData in output folder
-MD = "Metadata2006_2016"
+MD = "Metadata2006_2016.xlsx"
+MD_pth = pth + MD
 
 ###specify the ID column name
 ID = "BRnum"
 
 ##########
-"""
-### cheack for files already downloaded
+
+### check for files already downloaded
 dwn_files = glob.glob(os.path.join(dwn_pth, "*.pdf")) 
 exist = [os.path.basename(f)[:-4] for f in dwn_files]
 
-print(exist)
-"""
-### read in file
-df = pd.read_excel(list_pth, sheet_name=0, index_col=ID)
+#print(exist)
 
+
+### read in file for links
+df = pd.read_excel(list_pth, sheet_name=0, index_col=ID)
+#print(df[['Pdf_URL', 'Report_Html_Address']])
 ### filter out rows with no URL
 non_empty = df.Pdf_URL.notnull() == True
+#print("HERE")
+#print( non_empty)
 df = df[non_empty]
-#df2 = df.copy() - Shoud be this but uses head for testing
-df2 = df.head(5)
+df2 = df.copy()
+
+
+### TO BE IMPLEMENTET
+#  find which cases have alreay files in the excel sheet
+#dfmd = pd.read_excel(MD_pth, sheet_name="Metadata2006_2016", index_col=ID)
+#dfmd = dfmd['pdf_downloaded']
+#dwn_yes = dfmd.pdf_downloaded == "yes"
+#print(dwn_yes)
+#dfmd = dfmd[dwn_yes]
+#print(dfmd)
+#df2 = df2.merge(dfmd['pdf_downloaded'], how="inner", on=ID)
 
 #print(df2)
-"""
-#writer = pd.ExcelWriter(pth+'check_3.xlsx', engine='xlsxwriter', options={'strings_to_urls': False})
+
+
+
+
 
 
 
 ### filter out rows that have been downloaded
 df2 = df2[~df2.index.isin(exist)]
-"""
+
+#print(df2)
+
+df2 = df2
 ### loop through dataset, try to download file.
 for j in df2.index:
    
@@ -77,13 +97,13 @@ for j in df2.index:
         req.urlretrieve(df2.at[j,'Pdf_URL'], savefile)
 
         if os.path.isfile(savefile):
-            print("test")
-            """try:
+            
+            try:
                 pdfFileObj = open(savefile, 'rb')
                 #creating a pdf reader object
-                pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
+                pdfReader = PyPDF2.PdfReader(pdfFileObj)
                 with open(savefile, 'rb') as pdfFileObj:
-                    pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
+                    pdfReader = PyPDF2.PdfReader(pdfFileObj)
                     if pdfReader.numPages > 0:
                         df2.at[j, 'pdf_downloaded'] = "yes"
                     else:
@@ -92,18 +112,21 @@ for j in df2.index:
             except Exception as e:
                     df2.at[j, 'pdf_downloaded'] = str(e)
                     print(str(str(j)+" " + str(e)))
-                    """
+                 
         else:
-            #df2.at[j, 'pdf_downloaded'] = "404"
+            df2.at[j, 'pdf_downloaded'] = "404"
             print("not a file")
             
     except (urllib.error.HTTPError, urllib.error.URLError, ConnectionResetError, Exception ) as e:
+                df2.at[j, "pdf_downloaded"] = "ERROR"
                 df2.at[j,"error"] = str(e)
     
-    
+
+df_existing = pd.read_excel(MD_pth, index_col=ID)
+
+df_combined = pd.concat([df_existing, df2.pdf_downloaded])
+
+df_combined.to_excel(MD_pth, index=True)
 
 
-#df2.to_excel(writer, sheet_name="dwn")
-#writer.save()
-#writer.close()
- 
+

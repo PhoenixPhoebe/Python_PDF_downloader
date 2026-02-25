@@ -11,7 +11,6 @@ Created on Sun Oct 13 15:37:08 2019
 #pip install PyPDF2
 
 import pandas as pd
-from openpyxl import load_workbook
 import PyPDF2
 from pathlib import Path
 import shutil, os
@@ -69,7 +68,7 @@ df = df[non_empty]
 df2 = df.copy()
 
 
-### TO BE IMPLEMENTET
+### TO BE IMPLEMENTET - if clicent don't want to keep trying to download from the same places
 #  find which cases have alreay files in the excel sheet
 #dfmd = pd.read_excel(MD_pth, sheet_name="Metadata2006_2016", index_col=ID)
 #dfmd = dfmd['pdf_downloaded']

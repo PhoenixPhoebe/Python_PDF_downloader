@@ -53,7 +53,7 @@ exist = [os.path.basename(f)[:-4] for f in dwn_files]
 
 #print(exist)
 
-
+print("... Collecting Links ...")
 ### read in file for links
 df = pd.read_excel(list_pth, sheet_name=0, index_col=ID)
 
@@ -91,7 +91,6 @@ df2 = df2[~df2.index.isin(exist)]
 def try_to_download(Dataframe, index, column, file):
     try:
         req.urlretrieve(Dataframe.at[index, column], file)
-        print("got no: " + j + "with column: " + column)
         if os.path.isfile(file):
             
             try:
@@ -123,8 +122,9 @@ def try_to_download(Dataframe, index, column, file):
     return False
 
 
-
+print("... trying to download pdfs ...")
 df2 = df2.head(5)
+counter = 0
 ### loop through dataset, try to download file.
 for j in df2.index:
    
@@ -137,17 +137,21 @@ for j in df2.index:
     #if first link dosn't work, try the second
     if(res == False):
         try_to_download(df2, j, '', savefile)
+    else:
+         counter = counter + 1
 
     
-  
+print("... updating excel sheet") 
 #open the excel sheet
 df_existing = pd.read_excel(MD_pth, index_col=ID)
 
 #add the pdf status from the other dataframe to the dataframe from the excel sheet, and into a new dataframe
-df_combined = pd.concat([df_existing, df2.pdf_downloaded])
+#df_combined = pd.concat([df_existing, df2.pdf_downloaded])
+for i in df2.index:
+     df_existing.at[i, 'pdf_downloaded'] = df2.loc[i]['pdf_downloaded']
 
 #overwrite the excel sheet with the previous data along with the new pdf status
-df_combined.to_excel(MD_pth, index=True)
-
-
+#df_combined.to_excel(MD_pth, index=True)
+df_existing.to_excel(MD_pth, index=True)
+print("... susscufully downloaded " + str(counter) + " of " + str(len(df2)))
 

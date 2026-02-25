@@ -56,11 +56,15 @@ exist = [os.path.basename(f)[:-4] for f in dwn_files]
 
 ### read in file for links
 df = pd.read_excel(list_pth, sheet_name=0, index_col=ID)
-#print(df[['Pdf_URL', 'Report_Html_Address']])
-### filter out rows with no URL
-non_empty = df.Pdf_URL.notnull() == True
-#print("HERE")
-#print( non_empty)
+
+### filter out rows with no URL in first coloum
+non_empty = df.Pdf_URL.notnull() == True 
+### filter out rows with no URL in secound coloum and only keep the ones that have
+non_empty_2 = df.Report_Html_Address.notnull() == True
+non_empty_2 = non_empty_2.loc[non_empty_2]
+non_empty.update(non_empty_2)
+
+###filter out the ones that are missing
 df = df[non_empty]
 df2 = df.copy()
 
@@ -79,53 +83,70 @@ df2 = df.copy()
 
 
 
-
-
-
-
 ### filter out rows that have been downloaded
 df2 = df2[~df2.index.isin(exist)]
 
 #print(df2)
 
-df2 = df2
-### loop through dataset, try to download file.
-for j in df2.index:
-   
-    savefile = str(dwn_pth + str(j) + '.pdf')
+def try_to_download(Dataframe, index, column, file):
     try:
-        req.urlretrieve(df2.at[j,'Pdf_URL'], savefile)
-
-        if os.path.isfile(savefile):
+        req.urlretrieve(Dataframe.at[index, column], file)
+        print("got no: " + j + "with column: " + column)
+        if os.path.isfile(file):
             
             try:
-                pdfFileObj = open(savefile, 'rb')
+                pdfFileObj = open(file, 'rb')
                 #creating a pdf reader object
                 pdfReader = PyPDF2.PdfReader(pdfFileObj)
-                with open(savefile, 'rb') as pdfFileObj:
+                with open(file, 'rb') as pdfFileObj:
                     pdfReader = PyPDF2.PdfReader(pdfFileObj)
-                    if pdfReader.numPages > 0:
-                        df2.at[j, 'pdf_downloaded'] = "yes"
+                    #check if there is pages in the document
+                    if len(pdfReader.pages) > 0:
+                        Dataframe.at[index, 'pdf_downloaded'] = "yes"
+                        return True
                     else:
-                        df2.at[j, 'pdf_downloaded'] = "file_error"
+                        Dataframe.at[index, 'pdf_downloaded'] = "file_error"
                
             except Exception as e:
-                    df2.at[j, 'pdf_downloaded'] = str(e)
-                    print(str(str(j)+" " + str(e)))
+                    Dataframe.at[index, 'pdf_downloaded'] = str(e)
+                    print(str(str(index)+" " + str(e)))
                  
         else:
-            df2.at[j, 'pdf_downloaded'] = "404"
+            Dataframe.at[index, 'pdf_downloaded'] = "404"
             print("not a file")
             
     except (urllib.error.HTTPError, urllib.error.URLError, ConnectionResetError, Exception ) as e:
-                df2.at[j, "pdf_downloaded"] = "ERROR"
-                df2.at[j,"error"] = str(e)
+                Dataframe.at[index, "pdf_downloaded"] = "ERROR"
+                Dataframe.at[index,"error"] = str(e)
+                #print(e)
     
+    return False
 
+
+
+df2 = df2.head(5)
+### loop through dataset, try to download file.
+for j in df2.index:
+   
+   #Create the place for where to store the file and the name
+    savefile = str(dwn_pth + str(j) + '.pdf')
+
+    #try and download it with the first link
+    res = try_to_download(df2, j, 'Pdf_URL', savefile) 
+
+    #if first link dosn't work, try the second
+    if(res == False):
+        try_to_download(df2, j, '', savefile)
+
+    
+  
+#open the excel sheet
 df_existing = pd.read_excel(MD_pth, index_col=ID)
 
+#add the pdf status from the other dataframe to the dataframe from the excel sheet, and into a new dataframe
 df_combined = pd.concat([df_existing, df2.pdf_downloaded])
 
+#overwrite the excel sheet with the previous data along with the new pdf status
 df_combined.to_excel(MD_pth, index=True)
 
 

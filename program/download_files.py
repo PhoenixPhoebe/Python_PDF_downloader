@@ -46,46 +46,40 @@ ID = "BRnum"
 
 ##########
 
-### check for files already downloaded
-dwn_files = glob.glob(os.path.join(dwn_pth, "*.pdf")) 
-exist = [os.path.basename(f)[:-4] for f in dwn_files]
+df = pd.DataFrame
 
 #print(exist)
+def Collect_links():
+    
+    print("... Collecting Links ...")
+    ### read in file for links
+    tmp_df = pd.read_excel(list_pth, sheet_name=0, index_col=ID).head(5)
 
-print("... Collecting Links ...")
-### read in file for links
-df = pd.read_excel(list_pth, sheet_name=0, index_col=ID)
+    ### filter out rows with no URL in first coloum
+    non_empty = tmp_df.Pdf_URL.notnull() == True 
+    ### filter out rows with no URL in secound coloum and only keep the ones that have
+    non_empty_2 = tmp_df.Report_Html_Address.notnull() == True
+    non_empty_2 = non_empty_2.loc[non_empty_2]
+    non_empty.update(non_empty_2)
 
-### filter out rows with no URL in first coloum
-non_empty = df.Pdf_URL.notnull() == True 
-### filter out rows with no URL in secound coloum and only keep the ones that have
-non_empty_2 = df.Report_Html_Address.notnull() == True
-non_empty_2 = non_empty_2.loc[non_empty_2]
-non_empty.update(non_empty_2)
-
-###filter out the ones that are missing
-df = df[non_empty]
-df2 = df.copy()
-
-
-### TO BE IMPLEMENTET - if clicent don't want to keep trying to download from the same places
-#  find which cases have alreay files in the excel sheet
-#dfmd = pd.read_excel(MD_pth, sheet_name="Metadata2006_2016", index_col=ID)
-#dfmd = dfmd['pdf_downloaded']
-#dwn_yes = dfmd.pdf_downloaded == "yes"
-#print(dwn_yes)
-#dfmd = dfmd[dwn_yes]
-#print(dfmd)
-#df2 = df2.merge(dfmd['pdf_downloaded'], how="inner", on=ID)
-
-#print(df2)
+    ###filter out the ones that are missing
+    tmp_df = tmp_df[non_empty]
+    global df
+    df = tmp_df.copy()
+    
 
 
 
-### filter out rows that have been downloaded
-df2 = df2[~df2.index.isin(exist)]
+def Filter_out_exsisting():
+    global df
+    ### check for files already downloaded
+    dwn_files = glob.glob(os.path.join(dwn_pth, "*.pdf")) 
+    exist = [os.path.basename(f)[:-4] for f in dwn_files]
 
-#print(df2)
+    ### filter out rows that have been downloaded
+    df = df[~df.index.isin(exist)]
+
+
 
 def try_to_download(Dataframe, index, column, file):
     try:
@@ -120,38 +114,56 @@ def try_to_download(Dataframe, index, column, file):
     
     return False
 
+def Download_pdfs():
+    global df
+    print("... trying to download pdfs ...")
+    #df2 = df2.head(5)
+    counter = 0
+    ### loop through dataset, try to download file.
+    for j in df.index:
+        print("working on: " + str(j))
+        #Create the place for where to store the file and the name
+        savefile = str(dwn_pth + str(j) + '.pdf')
 
-print("... trying to download pdfs ...")
-#df2 = df2.head(5)
-counter = 0
-### loop through dataset, try to download file.
-for j in df2.index:
-    print("working on: " + str(j))
-   #Create the place for where to store the file and the name
-    savefile = str(dwn_pth + str(j) + '.pdf')
+        #try and download it with the first link
+        res = try_to_download(df, j, 'Pdf_URL', savefile) 
 
-    #try and download it with the first link
-    res = try_to_download(df2, j, 'Pdf_URL', savefile) 
-
-    #if first link dosn't work, try the second
-    if(res == False):
-        try_to_download(df2, j, '', savefile)
-    else:
-         counter = counter + 1
+        #if first link dosn't work, try the second
+        if(res == False):
+            try_to_download(df, j, '', savefile)
+        else:
+            counter = counter + 1
     
 
-    
-print("... updating excel sheet") 
-#open the excel sheet
-df_existing = pd.read_excel(MD_pth, index_col=ID)
+def write_to_excel():
+    global df
+    print("... updating excel sheet") 
+    #open the excel sheet
+    df_existing = pd.read_excel(MD_pth, index_col=ID)
 
-#add the pdf status from the other dataframe to the dataframe from the excel sheet, and into a new dataframe
-#df_combined = pd.concat([df_existing, df2.pdf_downloaded])
-for i in df2.index:
-     df_existing.at[i, 'pdf_downloaded'] = df2.loc[i]['pdf_downloaded']
+    #add the pdf status from the other dataframe to the dataframe from the excel sheet, and into a new dataframe
+    #df_combined = pd.concat([df_existing, df2.pdf_downloaded])
+    for i in df.index:
+        df_existing.at[i, 'pdf_downloaded'] = df.loc[i]['pdf_downloaded']
 
-#overwrite the excel sheet with the previous data along with the new pdf status
-#df_combined.to_excel(MD_pth, index=True)
-df_existing.to_excel(MD_pth, index=True)
-print("... susscufully downloaded " + str(counter) + " of " + str(len(df2)))
+    #overwrite the excel sheet with the previous data along with the new pdf status
+    #df_combined.to_excel(MD_pth, index=True)
+    df_existing.to_excel(MD_pth, index=True)
 
+
+
+### TO BE IMPLEMENTET - if clicent don't want to keep trying to download from the same places
+#  find which cases have alreay files in the excel sheet
+#dfmd = pd.read_excel(MD_pth, sheet_name="Metadata2006_2016", index_col=ID)
+#dfmd = dfmd['pdf_downloaded']
+#dwn_yes = dfmd.pdf_downloaded == "yes"
+#print(dwn_yes)
+#dfmd = dfmd[dwn_yes]
+#print(dfmd)
+#df2 = df2.merge(dfmd['pdf_downloaded'], how="inner", on=ID)
+
+#print(df2)
+def Run():
+    Collect_links()
+    Filter_out_exsisting()
+    Download_pdfs()

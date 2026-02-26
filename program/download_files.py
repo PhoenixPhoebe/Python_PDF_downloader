@@ -122,11 +122,11 @@ def try_to_download(Dataframe, index, column, file):
 
 
 print("... trying to download pdfs ...")
-df2 = df2.head(5)
+#df2 = df2.head(5)
 counter = 0
 ### loop through dataset, try to download file.
 for j in df2.index:
-   
+    print("working on: " + str(j))
    #Create the place for where to store the file and the name
     savefile = str(dwn_pth + str(j) + '.pdf')
 
@@ -138,6 +138,7 @@ for j in df2.index:
         try_to_download(df2, j, '', savefile)
     else:
          counter = counter + 1
+    
 
     
 print("... updating excel sheet") 

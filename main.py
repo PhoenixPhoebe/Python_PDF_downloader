@@ -6,28 +6,58 @@ from program import FileMangement as fm
 import pickle
 
 
-import time
 def main():
     root = tk.Tk()
 
     shw_det = False
-    Link_loc = ""
-    Link_file = tk.StringVar()
-    Dwn_loc = ""
-    Dwn_name = tk.StringVar()
-    MD_File = ""
-    MD_File_name = tk.StringVar()
+
+    def format_string(string) -> str:
+        return str(string.split('/')[-1])
+    
+
+    def Get_data():
+        global Link_loc
+        global Link_file
+        global Dwn_loc
+        global Dwn_name
+        global MD_File
+        global MD_File_name
+        global col1
+        global col2
+        Link_loc = ""
+        Dwn_loc = ""
+        MD_File = ""
+        Link_file = tk.StringVar()
+        Dwn_name = tk.StringVar()
+        MD_File_name = tk.StringVar()
+        col1 = tk.StringVar()
+        col2 = tk.StringVar()
+        data = fm.Get_locs()
+        if(len(data) > 0):
+            Link_loc = data['link_loc']
+            Link_file.set(format_string(Link_loc))
+            Dwn_loc = data['dwn_loc']
+            Dwn_name.set(format_string(Dwn_loc))
+            MD_File = data['MD_file']
+            MD_File_name.set(format_string(MD_File))
+            col1.set(str(data['col1']))
+            col2.set(str(data['col2']))
+            
+
+
+    def save_data():
+        data = {'link_loc' : Link_loc,
+                'dwn_loc' : Dwn_loc,
+                'MD_file': MD_File,
+                'col1': col1.get(),
+                'col2' : col2.get()}
+        fm.Set_locs(data)
 
     #app info
     root.title("PDF downloader")
     root.minsize(root.winfo_width(), root.winfo_height())
 
-    try:
-        with open('location_data.pkl', 'rb') as inf: 
-            in_data = pickle.load(inf) 
-            print(in_data)
-    except:
-        pass
+    Get_data()
 
 
     def Change_link_excel():
@@ -55,9 +85,9 @@ def main():
 
     #Column for finding links
     tk.Label(root, text="Kolonne").grid(column=2, row=0)
-    col1 = tk.Entry(root, textvariable="AL", width=5).grid(column=2, row=1)
+    tk.Entry(root, textvariable=col1, width=5).grid(column=2, row=1)
     tk.Label(root, text="kolonne 2").grid(column=3,row=0)
-    col2 = tk.Entry(root, width=5).grid(column=3, row=1)
+    tk.Entry(root,textvariable=col2, width=5).grid(column=3, row=1)
     
     #Place to save pdf's
     tk.Label(root, text="distanitioon for gemte pdf'er").grid(column=0,row=2, columnspan=2, sticky=tk.W)
@@ -96,9 +126,13 @@ def main():
             root.update_idletasks()
             time.sleep(1)
     """
+
     
     def download():
-        pass
+        save_data()
+        
+        #fm.Set_locs()
+
 
 
     

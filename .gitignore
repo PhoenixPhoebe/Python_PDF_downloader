@@ -1,3 +1,4 @@
 /Downloaded-pdfs/dwn
 *.tmp
 *~$*
+program/location_data.pkl

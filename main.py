@@ -1,15 +1,15 @@
 import tkinter as tk
 from tkinter import ttk
-from tkinter import filedialog
+#from tkinter import *
 from  program import download_files as dw
 from program import FileMangement as fm
-import pickle
 
 
 def main():
     root = tk.Tk()
 
     shw_det = False
+    status = tk.StringVar()
 
     def format_string(string) -> str:
         return str(string.split('/')[-1])
@@ -24,6 +24,8 @@ def main():
         global MD_File_name
         global col1
         global col2
+        global ID
+        global _id
         Link_loc = ""
         Dwn_loc = ""
         MD_File = ""
@@ -32,6 +34,8 @@ def main():
         MD_File_name = tk.StringVar()
         col1 = tk.StringVar()
         col2 = tk.StringVar()
+        _id = tk.StringVar()
+
         data = fm.Get_locs()
         if(len(data) > 0):
             Link_loc = data['link_loc']
@@ -42,6 +46,7 @@ def main():
             MD_File_name.set(format_string(MD_File))
             col1.set(str(data['col1']))
             col2.set(str(data['col2']))
+            _id.set(str(data['ID']))
             
 
 
@@ -50,7 +55,8 @@ def main():
                 'dwn_loc' : Dwn_loc,
                 'MD_file': MD_File,
                 'col1': col1.get(),
-                'col2' : col2.get()}
+                'col2' : col2.get(),
+                'ID' : _id.get()}
         fm.Set_locs(data)
 
     #app info
@@ -99,15 +105,21 @@ def main():
     tk.Entry(root, state="readonly", textvariable=MD_File_name).grid(column=0, row=5)
     tk.Button(root, text="Ændre", command=Change_data_ecxel).grid(column=1, row=5)
 
+    tk.Label(root, text="Id nummer").grid(column=2, row=2, columnspan=2, sticky=tk.W)
+    tk.Entry(root, textvariable=_id).grid(column=2, row=3, columnspan=2)
+
     #check box to see detalied status
     tk.Checkbutton(root, text="Vis Detaljeret status", variable=shw_det).grid(column=0, row=6, sticky=tk.W)
 
-    tk.Label(root, text="").grid(column=0, row=6, sticky=tk.W)
+    status_label = tk.Label(root, text="")
+    status_label.grid(column=0, row=7, sticky=tk.W)
+
     progress_i = ttk.Progressbar(root, orient='horizontal', mode='indeterminate')
-    progress_i.grid(column=0, row=7, columnspan=5, sticky=tk.EW)
+    progress_i.grid(column=0, row=8, columnspan=5, sticky=tk.EW)
+    
     
 
-
+    ### test with progress bar
     """
     def test():
         
@@ -127,19 +139,24 @@ def main():
             time.sleep(1)
     """
 
-    
     def download():
+        progress_i.start()
+        ID = _id.get()
         save_data()
-        
-        #fm.Set_locs()
+        status_label.config(text = "... Collecting Links ...")
+        root.update_idletasks()
+        dw.Run(Link_loc, ID, Dwn_loc, MD_File)
+        progress_i.stop()
+        #status.set("done")
+        status_label.config(text = "done")
 
-
+    #progress_i.grid(column=0, row=8, columnspan=5, sticky=tk.EW)
 
     
 
     # Download button
     button = tk.Button(root, text="download pdfs", command = download)
-    button.grid(column=2, row=2, columnspan=2, rowspan=4, sticky=tk.NSEW)
+    button.grid(column=2, row=4, columnspan=2, rowspan=2, sticky=tk.NSEW)
 
     
 

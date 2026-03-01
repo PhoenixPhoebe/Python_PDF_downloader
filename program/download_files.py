@@ -2,7 +2,7 @@
 """
 Created on Sun Oct 13 15:37:08 2019
 
-@author: hewi
+@author: hewi and liwi
 """
 
 #### IF error : "ModuleNotFOundError: no module named PyPDF2"
@@ -24,36 +24,13 @@ import glob
 
 ### File names will be the ID from the ID column (e.g. BR2005.pdf)
 
-########## EDIT HERE:
-    
-### specify path to file containing the URLs
-folder_pth = r'C:\Users\LineWienke\Documents\Python_PDF_downloader/'
-list_file = 'GRI_2017_2020.xlsx'
-list_pth = folder_pth + list_file
-
-###specify Output folder 
-pth = folder_pth + 'Downloaded-pdfs/'
-
-###Specify path for existing downloads
-dwn_pth = pth + "dwn/"
-
-###Specify file for MetaData in output folder
-MD = "Metadata2006_2016.xlsx"
-MD_pth = pth + MD
-
-###specify the ID column name
-ID = "BRnum"
-
-##########
-
-df = pd.DataFrame
 
 #print(exist)
 def Collect_links():
+
     
-    print("... Collecting Links ...")
     ### read in file for links
-    tmp_df = pd.read_excel(list_pth, sheet_name=0, index_col=ID).head(5)
+    tmp_df = pd.read_excel(list_pth, index_col=ID).head(5)
 
     ### filter out rows with no URL in first coloum
     non_empty = tmp_df.Pdf_URL.notnull() == True 
@@ -71,6 +48,7 @@ def Collect_links():
 
 
 def Filter_out_exsisting():
+    
     global df
     ### check for files already downloaded
     dwn_files = glob.glob(os.path.join(dwn_pth, "*.pdf")) 
@@ -163,7 +141,15 @@ def write_to_excel():
 #df2 = df2.merge(dfmd['pdf_downloaded'], how="inner", on=ID)
 
 #print(df2)
-def Run():
+def Run(pth, id, _dwn_pth, _MD_pth):
+    global list_pth
+    list_pth = pth
+    global ID
+    ID = id
+    global dwn_pth
+    dwn_pth = _dwn_pth
+    global MD_pth
+    MD_pth = _MD_pth
     Collect_links()
     Filter_out_exsisting()
     Download_pdfs()

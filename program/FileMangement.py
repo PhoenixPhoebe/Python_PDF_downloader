@@ -25,5 +25,5 @@ def Set_locs(data):
     #pickle and save in a file
     with open('program/location_data.pkl', 'wb') as outf:
         pickle.dump(data, outf) 
-        print(data)
+        
     
